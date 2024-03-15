@@ -25,6 +25,6 @@ class PrimaryReadReplicaConnection extends \Doctrine\DBAL\Connections\PrimaryRea
             unset($params['primary']['driverOptions']['x_reconnect_attempts']);
         }
 
-        self::__traitConstruct($params, $driver, $config, $eventManager);
+        $this->__traitConstruct($params, $driver, $config, $eventManager);
     }
 }
