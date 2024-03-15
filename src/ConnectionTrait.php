@@ -13,6 +13,7 @@ use Doctrine\DBAL\Statement as DBALStatement;
 use Doctrine\DBAL\Types\Type;
 use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\GoneAwayDetector;
 use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\MySQLGoneAwayDetector;
+use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\PostgreSQLGoneAwayDetector;
 
 /**
  * @psalm-require-extends \Doctrine\DBAL\Connection
@@ -40,7 +41,11 @@ trait ConnectionTrait
             unset($params['driverOptions']['x_reconnect_attempts']);
         }
 
-        $this->goneAwayDetector = new MySQLGoneAwayDetector();
+        $this->goneAwayDetector = match(true) {
+            $driver instanceof Driver\PDO\PgSQL\Driver => new PostgreSQLGoneAwayDetector(),
+            $driver instanceof Driver\PDO\MySQL\Driver => new MySQLGoneAwayDetector(),
+            default => throw new \LogicException('Unsupported driver')
+        };
 
         /**
          * @psalm-suppress InternalMethod
