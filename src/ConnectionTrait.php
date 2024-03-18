@@ -44,7 +44,7 @@ trait ConnectionTrait
         $this->goneAwayDetector = match(true) {
             $driver instanceof Driver\PDO\PgSQL\Driver => new PostgreSQLGoneAwayDetector(),
             $driver instanceof Driver\PDO\MySQL\Driver => new MySQLGoneAwayDetector(),
-            default => throw new \LogicException('Unsupported driver')
+            default => throw new \LogicException('Unsupported driver ' . $driver::class)
         };
 
         /**
