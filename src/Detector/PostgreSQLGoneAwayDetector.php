@@ -7,11 +7,13 @@ class PostgreSQLGoneAwayDetector implements GoneAwayDetector
     /** @var string[] */
     protected array $goneAwayExceptions = [
         'SSL connection has been closed unexpectedly',
+        'no connection to the server'
     ];
 
     /** @var string[] */
     protected array $goneAwayInUpdateExceptions = [
         'SSL connection has been closed unexpectedly',
+        'no connection to the server'
     ];
 
     public function isGoneAwayException(\Throwable $exception, string $sql = null): bool
