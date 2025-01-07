@@ -16,7 +16,7 @@ use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\MySQLGoneAwayDetector;
 use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\PostgreSQLGoneAwayDetector;
 
 /**
- * @psalm-require-extends \Doctrine\DBAL\Connection
+ * @require-extends \Doctrine\DBAL\Connection
  */
 trait ConnectionTrait
 {
@@ -82,7 +82,7 @@ trait ConnectionTrait
      *
      * @return R
      */
-    private function doWithRetry(callable $callable, string $sql = null)
+    private function doWithRetry(callable $callable, ?string $sql = null)
     {
         try {
             attempt:
@@ -120,10 +120,7 @@ trait ConnectionTrait
         $this->currentAttempts = 0;
     }
 
-    /**
-     * @param string $connectionName
-     */
-    public function connect($connectionName = null)
+    public function connect(?string $connectionName = null): bool
     {
         $this->hasBeenClosedWithAnOpenTransaction = false;
 
@@ -131,7 +128,7 @@ trait ConnectionTrait
         return parent::connect($connectionName);
     }
 
-    public function close()
+    public function close(): void
     {
         if ($this->getTransactionNestingLevel() > 0) {
             $this->hasBeenClosedWithAnOpenTransaction = true;
@@ -185,7 +182,7 @@ trait ConnectionTrait
         });
     }
 
-    public function canTryAgain(\Throwable $throwable, string $sql = null): bool
+    public function canTryAgain(\Throwable $throwable, ?string $sql = null): bool
     {
         if ($this->hasBeenClosedWithAnOpenTransaction) {
             return false;
