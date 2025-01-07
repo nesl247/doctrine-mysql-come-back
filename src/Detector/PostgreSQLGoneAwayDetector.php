@@ -16,7 +16,7 @@ class PostgreSQLGoneAwayDetector implements GoneAwayDetector
         'no connection to the server'
     ];
 
-    public function isGoneAwayException(\Throwable $exception, string $sql = null): bool
+    public function isGoneAwayException(\Throwable $exception, ?string $sql = null): bool
     {
         if ($this->isSavepoint($sql)) {
             return false;
