@@ -120,7 +120,10 @@ trait ConnectionTrait
         $this->currentAttempts = 0;
     }
 
-    public function connect(?string $connectionName = null): bool
+    /**
+     * @param string $connectionName
+     */
+    public function connect($connectionName = null): bool
     {
         $this->hasBeenClosedWithAnOpenTransaction = false;
 
