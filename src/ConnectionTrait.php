@@ -15,6 +15,7 @@ use Doctrine\DBAL\Types\Type;
 use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\GoneAwayDetector;
 use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\MySQLGoneAwayDetector;
 use Facile\DoctrineMySQLComeBack\Doctrine\DBAL\Detector\PostgreSQLGoneAwayDetector;
+use STS\Backoff\Backoff;
 
 /**
  * @psalm-require-extends Connection
@@ -25,7 +26,7 @@ trait ConnectionTrait
 
     protected int $maxReconnectAttempts = 0;
 
-    protected int $currentAttempts = 0;
+    private int $reconnectDelay = 0;
 
     private bool $hasBeenClosedWithAnOpenTransaction = false;
 
@@ -40,6 +41,11 @@ trait ConnectionTrait
         if (isset($params['driverOptions']['x_reconnect_attempts'])) {
             $this->maxReconnectAttempts = $this->validateAttemptsOption($params['driverOptions']['x_reconnect_attempts']);
             unset($params['driverOptions']['x_reconnect_attempts']);
+        }
+
+        if (isset($params['driverOptions']['x_reconnect_delay'])) {
+            $this->reconnectDelay = (int) $params['driverOptions']['x_reconnect_delay'];
+            unset($params['driverOptions']['x_reconnect_delay']);
         }
 
         $this->goneAwayDetector = match(true) {
@@ -85,40 +91,19 @@ trait ConnectionTrait
      */
     private function doWithRetry(callable $callable, ?string $sql = null)
     {
-        try {
-            attempt:
-            $result = $callable();
-        } catch (\Exception $e) {
-            if (! $this->canTryAgain($e, $sql)) {
-                throw $e;
-            }
+        $backoff = (new Backoff())
+            ->setMaxAttempts($this->maxReconnectAttempts)
+            ->setWaitCap(1000)
+            ->enableJitter()
+            ->setDecider(function (int $attempt, int $maxAttempts, mixed $result, ?\Throwable $exception = null) use ($sql): bool {
+                if($attempt >= $maxAttempts && $exception !== null) {
+                    throw  $exception;
+                }
 
-            $this->close();
-            $this->increaseAttemptCount();
+                return $attempt < $maxAttempts && $exception !== null && $this->canTryAgain(throwable: $exception, sql: $sql);
+            });
 
-            goto attempt;
-        }
-
-        $this->resetAttemptCount();
-
-        /** @psalm-suppress PossiblyUndefinedVariable */
-        return $result;
-    }
-
-    /**
-     * @internal
-     */
-    public function increaseAttemptCount(): void
-    {
-        ++$this->currentAttempts;
-    }
-
-    /**
-     * @internal
-     */
-    public function resetAttemptCount(): void
-    {
-        $this->currentAttempts = 0;
+        return $backoff->run($callable);
     }
 
     /**
@@ -183,10 +168,6 @@ trait ConnectionTrait
     public function canTryAgain(\Throwable $throwable, ?string $sql = null): bool
     {
         if ($this->hasBeenClosedWithAnOpenTransaction) {
-            return false;
-        }
-
-        if ($this->currentAttempts >= $this->maxReconnectAttempts) {
             return false;
         }
 

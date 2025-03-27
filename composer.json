@@ -22,8 +22,9 @@
         }
     ],
     "require": {
-        "php": "^8.1",
-        "doctrine/dbal": "^3.6.0"
+        "php": "^8.2",
+        "doctrine/dbal": "^3.6.0",
+        "stechstudio/backoff": "^1.5"
     },
     "require-dev": {
         "facile-it/facile-coding-standard": "^1.2.0",
@@ -60,6 +61,8 @@
     "scripts": {
         "test": "phpunit",
         "phpcs": "php-cs-fixer fix --dry-run --diff",
-        "phpcs-fix": "php-cs-fixer fix --diff"
+        "phpcs-fix": "php-cs-fixer fix --diff",
+        "cs-check": "php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix --diff"
     }
 }

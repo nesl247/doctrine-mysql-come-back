@@ -12,9 +12,12 @@ use Facile\DoctrineMySQLComeBack\Tests\Functional\Spy\PrimaryReadReplicaConnecti
 class PrimaryReadReplicaConnectionTest extends ConnectionTraitTest
 {
     /**
-     * @param class-string<Driver> $driver
+     * @param string $driver
+     * @param int $attempts
+     * @param bool $enableSavepoints
+     * @param int $delay
      */
-    protected function createConnection(string $driver, int $attempts, bool $enableSavepoints): PrimaryReadReplicaConnection
+    protected function createConnection(string $driver, int $attempts, bool $enableSavepoints, int $delay): PrimaryReadReplicaConnection
     {
         $connection = DriverManager::getConnection(['primary' => $this->getConnectionParams(), 'replica' => [$this->getConnectionParams()], 'driverOptions' => [
             'x_reconnect_attempts' => $attempts,
@@ -28,11 +31,15 @@ class PrimaryReadReplicaConnectionTest extends ConnectionTraitTest
     }
 
     /**
-     * @param class-string<Driver> $driver
      *
-     * @return Connection|PrimaryReadReplicaConnection
+     * @param string $driver
+     * @param int $attempts
+     * @param bool $enableSavepoints
+     * @param int $delay *
+     *
+* @return Connection|PrimaryReadReplicaConnection
      */
-    protected function getConnectedConnection(string $driver, int $attempts, bool $enableSavepoints): DBALConnection
+    protected function getConnectedConnection(string $driver, int $attempts, bool $enableSavepoints, int $delay = 0): DBALConnection
     {
         $connection = parent::getConnectedConnection($driver, $attempts, $enableSavepoints);
         $this->assertInstanceOf(PrimaryReadReplicaConnection::class, $connection);
@@ -47,7 +54,7 @@ class PrimaryReadReplicaConnectionTest extends ConnectionTraitTest
     #[DataProvider('driverDataProvider')]
     public function testBeginTransactionShouldNotInterfereWhenSwitchingToPrimary(string $driver, bool $enableSavepoints): void
     {
-        $connection = $this->createConnection($driver, 0, $enableSavepoints);
+        $connection = $this->createConnection($driver, 0, $enableSavepoints, 0);
         $this->assertFalse($connection->isConnectedToPrimary());
         $this->assertSame(1, $connection->connectCount);
         $this->forceDisconnect($connection);
