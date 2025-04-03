@@ -96,11 +96,11 @@ trait ConnectionTrait
             ->setWaitCap(1000)
             ->enableJitter()
             ->setDecider(function (int $attempt, int $maxAttempts, mixed $result, ?\Throwable $exception = null) use ($sql): bool {
-                if($attempt >= $maxAttempts && $exception !== null) {
+                if($exception !== null && ($attempt >= $maxAttempts || !$this->canTryAgain(throwable: $exception, sql: $sql))) {
                     throw  $exception;
                 }
 
-                return $attempt < $maxAttempts && $exception !== null && $this->canTryAgain(throwable: $exception, sql: $sql);
+                return $attempt < $maxAttempts && $exception !== null;
             });
 
         return $backoff->run($callable);
