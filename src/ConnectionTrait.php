@@ -104,7 +104,9 @@ trait ConnectionTrait
                     throw $exception;
                 }
 
-                $this->close();
+                if ($exception !== null) {
+                    $this->close();
+                }
 
                 return $attempt < $maxAttempts && $exception !== null;
             });
