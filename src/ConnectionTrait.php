@@ -89,7 +89,7 @@ trait ConnectionTrait
      *
      * @return R
      */
-    private function doWithRetry(callable $callable, ?string $sql = null)
+    public function doWithRetry(callable $callable, ?string $sql = null)
     {
         $backoff = (new Backoff())
             ->setMaxAttempts($this->maxReconnectAttempts)
